@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import { createUser, getUserByEmail, updateUser } from './database';
 
 const app = express();
@@ -8,6 +9,28 @@ const PORT = 4000;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Rate limiter for auth endpoints (login/register) - max 10 requests per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again after 15 minutes.' }
+});
+
+// General API limiter - max 60 requests per 15 minutes
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please slow down.' }
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
