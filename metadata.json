@@ -1,0 +1,5 @@
+{
+  "name": "AgriAdvisor - Agricultural Data Analytics",
+  "description": "A comprehensive agricultural advisory system featuring plant disease detection and multilingual support for farmers.",
+  "requestFramePermissions": ["camera"]
+}
