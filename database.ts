@@ -1,57 +1,44 @@
-import Database from 'better-sqlite3';
+import { PrismaClient } from '@prisma/client';
 
-const db = new Database('agriadvisor.db');
+// Handle BigInt serialization so Express res.json() doesn't crash sending BigInt IDs
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    phone TEXT NOT NULL,
-    password TEXT NOT NULL,
-    fieldType TEXT NOT NULL,
-    landArea TEXT NOT NULL,
-    profilePic TEXT
-  )
-`);
+const prisma = new PrismaClient();
 
-export function createUser(user: any) {
-  const stmt = db.prepare(`
-    INSERT INTO users (name, email, phone, password, fieldType, landArea, profilePic)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-  
-  const info = stmt.run(
-    user.name,
-    user.email,
-    user.phone,
-    user.password,
-    user.fieldType,
-    user.landArea,
-    user.profilePic || null
-  );
-  
-  return info.lastInsertRowid;
+export async function createUser(user: any) {
+  const newUser = await prisma.user.create({
+    data: {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      password: user.password,
+      fieldType: user.fieldType,
+      landArea: user.landArea,
+      profilePic: user.profilePic || null
+    }
+  });
+  return newUser.id;
 }
 
-export function getUserByEmail(email: string) {
-  const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-  return stmt.get(email);
+export async function getUserByEmail(email: string) {
+  const user = await prisma.user.findUnique({
+    where: { email }
+  });
+  return user;
 }
 
-export function updateUser(email: string, updates: any) {
-  const stmt = db.prepare(`
-    UPDATE users 
-    SET name = ?, phone = ?, fieldType = ?, landArea = ?, profilePic = COALESCE(?, profilePic)
-    WHERE email = ?
-  `);
-  
-  stmt.run(
-    updates.name,
-    updates.phone,
-    updates.fieldType,
-    updates.landArea,
-    updates.profilePic || null,
-    email
-  );
+export async function updateUser(email: string, updates: any) {
+  const updatedUser = await prisma.user.update({
+    where: { email },
+    data: {
+      name: updates.name,
+      phone: updates.phone,
+      fieldType: updates.fieldType,
+      landArea: updates.landArea,
+      ...(updates.profilePic !== undefined && { profilePic: updates.profilePic })
+    }
+  });
+  return updatedUser;
 }

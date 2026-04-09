@@ -29,7 +29,7 @@ export default function Dashboard({ language }: DashboardProps) {
         setResult(null);
         setError(null);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file as Blob);
     });
 
     // Reset input so same file can be re-selected
@@ -132,7 +132,7 @@ export default function Dashboard({ language }: DashboardProps) {
                     setResult(null);
                     setError(null);
                   };
-                  reader.readAsDataURL(file);
+                  reader.readAsDataURL(file as Blob);
                 });
               }}
               className="aspect-square rounded-[2rem] border-2 border-dashed border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50 transition-all flex flex-col items-center justify-center cursor-pointer group"
